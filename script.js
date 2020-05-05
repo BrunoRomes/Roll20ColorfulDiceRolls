@@ -109,16 +109,7 @@
     function waitForLoad() {
         if(document.querySelectorAll(".userscript-commandintro").length > 0) {
             console.log("Page Loaded. Running Script.")
-        	applyOnLoad();
-            XMLHttpRequest.prototype.realSend = XMLHttpRequest.prototype.send;
-    		XMLHttpRequest.prototype.send = function(value) {
-        		this.addEventListener("load", function(){
-	            	if(String(value).includes("rollresult")) {
-	                	setTimeout(applyOnLoad, 1000)
-	            	}
-        		}, false);
-        		this.realSend(value);
-    		};
+            setInterval(applyOnLoad, 1000)
         }
         else {
             console.log("Waiting for page to load.")
