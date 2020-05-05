@@ -59,7 +59,12 @@
     function getBoundaries(text) {
         var parts = text.split(" ")[1].split("-")
 
-        return [parseInt(parts[0]), parseInt(parts[1])];
+        var min = parseInt(parts[0])
+        var max = parseInt(parts[1])
+        if(parts.length === 1) {
+            max = min
+        }
+        return [min, max];
     }
 
     function applyColor(resultNode) {
@@ -69,6 +74,14 @@
         if(resultNode.parentElement.parentElement.parentElement.childElementCount !== 3) {
             return;
         }
+
+        if(resultNode.className.includes("whiteresult") ||
+          resultNode.className.includes("greenresult") ||
+          resultNode.className.includes("yellowresult") ||
+          resultNode.className.includes("redresult") ) {
+            return;
+        }
+
 
         var ranksText = resultNode.parentElement.parentElement.parentElement.children[0].innerText.split("\n")
 
