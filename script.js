@@ -1,12 +1,13 @@
 // ==UserScript==
 // @name         Colorful Dice Roll Results
 // @namespace    http://tampermonkey.net/
-// @version      0.1
-// @description  try to take over the world!
-// @author       You
+// @version      0.2
+// @description  Tampermonkey script to color the dice rolls results.
+// @author       Bruno Lima
 // @match        https://app.roll20.net/editor/
 // @grant        none
-// @run-at   document-idle
+// @run-at       document-idle
+// @downloadURL  https://raw.githubusercontent.com/BrunoRomes/Roll20ColorfulDiceRolls/master/script.js
 // ==/UserScript==
 
 (function() {
@@ -56,18 +57,13 @@
 		}
 	` );
 
-    function getBoundaries(text) {
+    function getLowerBoundary(text) {
         var parts = text.split(" ")[1].split("-")
 
-        var min = parseInt(parts[0])
-        var max = parseInt(parts[1])
-        if(parts.length === 1) {
-            max = min
-        }
-        return [min, max];
+        return parseInt(parts[0])
     }
 
-    function applyColor(resultNode) {
+    function classifyRoll(resultNode) {
         var roll = parseInt(resultNode.innerText);
 
         // We need the structure to have 3 children, 1 being the ranks and another the result
@@ -75,6 +71,7 @@
             return;
         }
 
+        // If the node has already been applied a color, do nothing
         if(resultNode.className.includes("whiteresult") ||
           resultNode.className.includes("greenresult") ||
           resultNode.className.includes("yellowresult") ||
@@ -82,54 +79,55 @@
             return;
         }
 
-
         var ranksText = resultNode.parentElement.parentElement.parentElement.children[0].innerText.split("\n")
 
+        // If the ranks text does not have 5 lines (rank, white, green, yellow and red results), do nothing
         if(ranksText.length != 5) {
             return;
         }
 
         // Ignore position 0
-        var white = getBoundaries(ranksText[1]);
-        var green = getBoundaries(ranksText[2]);
-        var yellow = getBoundaries(ranksText[3]);
-        var red = getBoundaries(ranksText[4]);
+        var whiteMin = getLowerBoundary(ranksText[1]);
+        var greenMin = getLowerBoundary(ranksText[2]);
+        var yellowMin = getLowerBoundary(ranksText[3]);
+        var redMin = getLowerBoundary(ranksText[4]);
 
         var color = "";
-        if(roll <= white[1]) {
-            color = "whiteresult";
+        if(roll >= redMin) {
+            color = " redresult";
         }
-        else if(roll <= green[1]) {
-            color = "greenresult";
+        else if(roll >= yellowMin) {
+            color = " yellowresult";
         }
-        else if(roll <= yellow[1]) {
-            color = "yellowresult";
+        else if(roll >= greenMin) {
+            color = " greenresult";
         }
-        else if(roll <= red[1]) {
-            color = "redresult";
-        }
-        if(!resultNode.className.includes(color)) {
-            resultNode.className += " " + color;
+        else {
+            color = " whiteresult";
         }
 
+        resultNode.className += color;
     }
 
-    function applyOnLoad() {
+    function classifyDiceRolls() {
         var allRollResults = document.querySelectorAll(".inlinerollresult")
-        allRollResults.forEach(result => applyColor(result));
+        allRollResults.forEach(result => classifyRoll(result));
+        // Waits before trying to classify again
+        setTimeout(classifyDiceRolls, 1000)
     }
 
-    function waitForLoad() {
+    function waitForPageLoad() {
+        // Waits for the page to fully load to start classifying dice rolls
         if(document.querySelectorAll(".userscript-commandintro").length > 0) {
-            console.log("Page Loaded. Running Script.")
-            setInterval(applyOnLoad, 1000)
+            console.log("Page Loaded. Starting classification.")
+            setTimeout(classifyDiceRolls, 1000)
         }
         else {
             console.log("Waiting for page to load.")
-            setTimeout(waitForLoad, 1000)
+            setTimeout(waitForPageLoad, 1000)
         }
     }
 
-    waitForLoad();
+    waitForPageLoad();
 
 })();
